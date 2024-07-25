@@ -203,6 +203,7 @@ class LSH:
         id_fields: Union[str, list] = "id",
         minhash_field: str = "_minhash_signature",
         profile_dir: str = None,
+        s3_fs: s3fs.S3FileSystem = None,
     ):
         """
         Parameters
@@ -220,6 +221,8 @@ class LSH:
         minhash_field: Column in the Dataset denoting minhash signature.
         profile_dir: str, Default None
           If specified directory to write dask profile
+        s3_fs: s3fs.S3FileSystem, Default None
+          If specified, use this S3 filesystem object for S3 operations.
         """
         self.num_hashes = num_hashes
         self.num_buckets = num_buckets
@@ -236,11 +239,12 @@ class LSH:
             )
         self.cache_dir = cache_dir
         self.profile_dir = profile_dir
+        self.s3_fs = s3_fs or s3fs.S3FileSystem()
 
         if isinstance(logger, str):
             self._logger = create_logger(
                 rank=0,
-                log_file=os.path.join(logger, "LSH.log"),
+                log_file=fsspec.open(f"{logger}/LSH.log", 'w'),
                 name="LSH",
             )
         else:
@@ -357,20 +361,20 @@ class LSH:
             df2 = df2.map_partitions(lambda x: x.astype(dtypes))
 
             if i == 0:
-                if os.path.exists(write_path):
+                if self.s3_fs.exists(write_path):
                     warnings.warn(
                         f"Output path {write_path} already exists and will be overwritten"
                     )
-                df2.to_parquet(write_path, write_index=False, overwrite=True)
+                df2.to_parquet(write_path, write_index=False, overwrite=True, filesystem=self.s3_fs)
             else:
-                df2.to_parquet(write_path, write_index=False, append=True)
+                df2.to_parquet(write_path, write_index=False, append=True, filesystem=self.s3_fs)
 
             self._logger.info(f"Wrote data for buckets: {value_vars}")
 
     def __call__(self, dataset: DocumentDataset) -> DocumentDataset:
         df = dataset.df
 
-        write_path = os.path.join(self.cache_dir, "_buckets.parquet")
+        write_path = f"{self.cache_dir}/_buckets.parquet"
         t0 = time.time()
         with performance_report_if(
             self.profile_dir,
@@ -379,7 +383,7 @@ class LSH:
             self.lsh(write_path=write_path, df=df)
         self._logger.info(f"Computing and writing buckets took {time.time() - t0} s")
 
-        buckets_df = dask_cudf.read_parquet(write_path, split_row_groups=False)
+        buckets_df = dask_cudf.read_parquet(write_path, split_row_groups=False, filesystem=self.s3_fs)
         return DocumentDataset(buckets_df)
 
 

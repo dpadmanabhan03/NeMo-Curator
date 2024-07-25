@@ -14,7 +14,9 @@
 
 import os
 import time
-
+import dask_cudf
+import dask.dataframe as dd
+import dask.config
 from nemo_curator import MinHash
 from nemo_curator.datasets import DocumentDataset
 from nemo_curator.log import create_logger
@@ -37,6 +39,8 @@ def main(args):
         rank=0, log_file=os.path.join(args.log_dir, "rank_000.log"), name="minhash_log"
     )
     logger.info(f"Starting workflow with args:\n {args}")
+
+    dask.config.set({"dataframe.backend": "cudf"})
 
     assert args.hash_bytes in {4, 8}, "Currently only 32bit/64bit hashes are supported"
     assert args.device == "gpu"
@@ -70,14 +74,16 @@ def main(args):
             break
 
         files = get_all_files_paths_under(root=data_path, recurse_subdirectories=False)
-        files = [f for f in files if f.endswith(".jsonl")]
-        df = read_data(
+        files = [f for f in files if f.endswith(".parquet")]
+        files_with_s3_prefix = [f"s3://{file}" for file in files]
+        files = files_with_s3_prefix
+         # Use Dask to read JSON lines directly from S3
+        df = dask_cudf.read_parquet(
             files[:num_files] if num_files else files,
-            file_type="jsonl",
-            backend="cudf",
-            files_per_partition=args.files_per_partition,
-            add_filename=False,
-        )[[id_field, text_field]]
+            blocksize="256MiB",
+            aggregate_files=False,
+            columns=[id_field, text_field]
+        )
 
         if num_files is not None:
             num_files -= len(files)

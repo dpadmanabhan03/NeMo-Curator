@@ -18,6 +18,7 @@ import time
 import cudf
 import dask_cudf
 import numpy as np
+import s3fs
 
 from nemo_curator import LSH
 from nemo_curator.datasets import DocumentDataset
@@ -51,9 +52,10 @@ def main(args):
     dfs = []
     for data_path in data_paths:
         dfs.append(
-            dask_cudf.read_parquet(data_path, blocksize="2GB", aggregate_files=True)
+            dask_cudf.read_parquet(data_path)
         )
     df = dask_cudf.concat(dfs, ignore_unknown_divisions=True)
+    df = df[~df.adlr_id.isna()]
     df = df.map_partitions(
         convert_str_id_to_int,
         id_column=id_field,
@@ -61,6 +63,7 @@ def main(args):
             {minhash_field: [[1, 2, 3]], "doc_id": [1], "dataset_id": np.uint32(1)}
         ),
     )
+    s3_fs = s3fs.S3FileSystem()
     lsh = LSH(
         cache_dir=args.output_bucket_dir,
         num_hashes=args.minhash_length,
@@ -70,6 +73,7 @@ def main(args):
         profile_dir=args.profile_path,
         minhash_field=minhash_field,
         logger=logger,
+        s3_fs=s3_fs
     )
     t1 = time.time()
     _ = lsh(DocumentDataset(df))

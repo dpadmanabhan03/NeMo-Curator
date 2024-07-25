@@ -24,7 +24,7 @@ import pandas as pd
 from dask import delayed
 
 from nemo_curator.utils.distributed_utils import single_partition_write_with_filename
-
+import s3fs
 
 def mkdir(d):
     pathlib.Path(d).mkdir(parents=True, exist_ok=True)
@@ -46,14 +46,23 @@ def get_all_files_paths_under(root, recurse_subdirectories=True, followlinks=Fal
                               number of files.
         followlinks: Whether to follow symbolic links.
     """
-    if recurse_subdirectories:
-        file_ls = [
-            os.path.join(r, f)
-            for r, subdirs, files in os.walk(root, followlinks=followlinks)
-            for f in files
-        ]
+    if root.startswith("s3://"):
+        # Handle S3 paths
+        s3 = s3fs.S3FileSystem()
+        if recurse_subdirectories:
+            file_ls = [f for f in s3.find(root) if s3.isfile(f)]
+        else:
+            file_ls = [f for f in s3.ls(root) if s3.isfile(f)]
     else:
-        file_ls = [entry.path for entry in os.scandir(root)]
+        # Handle local file system paths
+        if recurse_subdirectories:
+            file_ls = [
+                os.path.join(r, f)
+                for r, subdirs, files in os.walk(root, followlinks=followlinks)
+                for f in files
+            ]
+        else:
+            file_ls = [entry.path for entry in os.scandir(root)]
 
     file_ls.sort()
     return file_ls
