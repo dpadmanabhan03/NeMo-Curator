@@ -1,0 +1,32 @@
+{
+  "jobDefinitionName": "compute-minhashes-s3-csi-job",
+  "type": "container",
+  "eksProperties": {
+    "podProperties": {
+      "hostNetwork": true,
+      "containers": [
+        {
+          "image": "354625738399.dkr.ecr.us-west-2.amazonaws.com/nemo-curator-batch:latest",
+          "imagePullPolicy": "IfNotPresent",
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "2048Mi"
+            }
+          },
+          "command": [
+    "python3",
+    "kubeclient.py",
+    "--command",
+    "gpu_compute_minhashes --scheduler-address localhost:8786 --input-data-dirs /nemo-workspace/redpajama_sharded_add_id/arxiv/ --input-json-text-field text --input-json-id-field adlr_id --files-per-partition 2 --output-minhash-dir /nemo-workspace/ --log-dir ./"
+  ]
+        }
+      ],
+      "metadata": {
+        "labels": {
+          "environment": "test"
+        }
+      }
+    }
+  }
+}

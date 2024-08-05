@@ -1,0 +1,11 @@
+# Use an appropriate base image
+FROM nvcr.io/nvidian/nemo:nightly
+
+WORKDIR /
+
+COPY compute_minhashes.py /opt/NeMo-Curator/nemo_curator/scripts/fuzzy_deduplication/
+
+COPY s3_reader.py /opt/NeMo-Curator/nemo_curator/scripts/fuzzy_deduplication/
+
+RUN pip install s3fs
+

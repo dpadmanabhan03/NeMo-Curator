@@ -18,6 +18,7 @@ def create_cluster(
 
     custom_cluster_spec = make_cluster_spec(
         name=name,
+        env={"DASK_DATAFRAME__QUERY_PLANNING": "False"},
         worker_command=dask_worker_command,
         n_workers=n_workers,
         image=image,

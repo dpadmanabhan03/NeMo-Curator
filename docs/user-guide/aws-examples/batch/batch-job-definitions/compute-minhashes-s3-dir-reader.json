@@ -1,0 +1,31 @@
+{
+  "jobDefinitionName": "compute-minhashes-s3-read-parquet-job",
+  "type": "container",
+  "eksProperties": {
+    "podProperties": {
+      "hostNetwork": true,
+      "containers": [
+        {
+          "image": "354625738399.dkr.ecr.us-west-2.amazonaws.com/nemo-curator-batch:latest",
+          "imagePullPolicy": "IfNotPresent",
+          "resources": {
+            "limits": {
+              "cpu": "1",
+              "memory": "2048Mi"
+            }
+          },
+          "command": [
+            "python3",
+            "kubeclient.py",
+            "--command",
+            "python3 /opt/NeMo-Curator/nemo_curator/scripts/fuzzy_deduplication/compute_minhashes.py --scheduler-address localhost:8786 --s3-input-minhash-dir s3://nemo-curator-paul/redpajama_parquet/ --input-json-text-field text --input-json-id-field adlr_id --files-per-partition 2 --s3-output-minhash-dir s3://nemo-curator-paul/minhashes.parquet/ --log-dir ./"]
+          }
+          ],
+      "metadata": {
+        "labels": {
+          "environment": "test"
+        }
+      }
+    }
+  }
+}

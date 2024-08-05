@@ -1,0 +1,15 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: aws-batch-cluster-role-binding
+subjects:
+- kind: User
+  name: aws-batch
+  apiGroup: rbac.authorization.k8s.io
+- kind: ServiceAccount
+  name: default
+  namespace: my-aws-batch-namespace
+roleRef:
+  kind: ClusterRole
+  name: aws-batch-cluster-role
+  apiGroup: rbac.authorization.k8s.io

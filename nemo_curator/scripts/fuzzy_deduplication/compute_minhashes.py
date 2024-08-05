@@ -15,6 +15,10 @@
 import os
 import time
 
+import dask
+import dask.dataframe as dd
+import s3_reader
+
 from nemo_curator import MinHash
 from nemo_curator.datasets import DocumentDataset
 from nemo_curator.log import create_logger
@@ -26,6 +30,8 @@ from nemo_curator.utils.distributed_utils import (
 from nemo_curator.utils.file_utils import get_all_files_paths_under
 from nemo_curator.utils.fuzzy_dedup_utils.io_utils import strip_trailing_sep
 from nemo_curator.utils.script_utils import ArgumentHelper
+
+dask.config.set({"dataframe.backend": "cudf"})
 
 
 def pre_imports():
@@ -60,8 +66,14 @@ def main(args):
         id_field=id_field,
         text_field=text_field,
     )
+    if args.s3_input_minhash_dir:
+        s3_reader.compute_minhashes(
+            minhasher, args.s3_input_minhash_dir, args.output_minhash_dir
+        )
+        return
 
     t0 = time.time()
+
     for data_path in data_paths:
         print(f"Computing minhashes for {data_path}", flush=True)
         data_path = strip_trailing_sep(data_path)
@@ -137,10 +149,24 @@ def attach_args(parser=None):
     parser.add_argument(
         "--output-minhash-dir",
         type=str,
-        required=True,
+        required=False,
         help="Output directory where minhashes will be written. "
         "Each file is a parquet file that contains two series, the document ids, "
         "and a series of lists, each list denoting the minhash signature for that document id.",
+    )
+
+    parser.add_argument(
+        "--s3-input-minhash-dir",
+        type=str,
+        required=False,
+        help="S3 Input directory which has parquet files to be read for compute_minhashes. ",
+    )
+
+    parser.add_argument(
+        "--s3-output-minhash-dir",
+        type=str,
+        required=False,
+        help="s3 Output directory where minhashes will be written. ",
     )
 
     return parser

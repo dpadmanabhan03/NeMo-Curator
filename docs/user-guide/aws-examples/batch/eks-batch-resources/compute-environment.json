@@ -1,0 +1,19 @@
+{
+  "computeEnvironmentName": "EKS-Batch-CE-nemo",
+  "type": "MANAGED",
+  "state": "ENABLED",
+  "eksConfiguration": {
+    "eksClusterArn": "",
+    "kubernetesNamespace": "my-aws-batch-namespace"
+  },
+  "computeResources": {
+    "type": "EC2",
+    "allocationStrategy": "BEST_FIT_PROGRESSIVE",
+    "minvCpus": 0,
+    "maxvCpus": 128,
+    "instanceTypes": [],
+    "subnets": [],
+    "securityGroupIds": [],
+    "instanceRole": ""
+  }
+}

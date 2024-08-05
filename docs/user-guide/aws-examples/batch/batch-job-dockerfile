@@ -1,0 +1,8 @@
+# Use the base image
+FROM public.ecr.aws/docker/library/python:3.10.12-slim-bullseye
+
+# Install Kubernetes client using pip
+RUN pip install kubernetes
+
+WORKDIR /
+COPY kubeclient.py .

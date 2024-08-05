@@ -1,0 +1,10 @@
+{
+  "jobQueueName": "EKS-Batch-JQ1-nemo",
+  "priority": 1,
+  "computeEnvironmentOrder": [
+    {
+      "order": 1,
+      "computeEnvironment": "EKS-Batch-CE-nemo"
+    }
+  ]
+}
