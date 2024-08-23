@@ -1,0 +1,13 @@
+from dask.distributed import Client
+
+client = Client('127.0.0.1:8786')
+
+def install_s3fs():
+    import subprocess
+    subprocess.check_call(['pip', 'install', '--no-cache-dir', 's3fs'])
+
+install_s3fs
+
+client.run(install_s3fs)
+
+client.close()

@@ -94,6 +94,7 @@ The environment to run the provided scripts needs only dask-kubernetes and kuber
   python3 examples/k8s/create_dask_cluster.py \
           --name dask-gpu-cluster \
           --n_workers 2 \
+          --n_gpus_per_worker 1 \
           --image nvcr.io/nvidian/nemo:nightly \
           --image_pull_secret ngc-registry \
           --pvcs nemo-workspace:/nemo-workspace
