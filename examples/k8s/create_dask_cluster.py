@@ -1,5 +1,6 @@
 import argparse
 
+import dask
 from dask_kubernetes.operator.kubecluster import KubeCluster, make_cluster_spec
 
 
@@ -18,7 +19,10 @@ def create_cluster(
 
     custom_cluster_spec = make_cluster_spec(
         name=name,
-        env={"DASK_DATAFRAME__QUERY_PLANNING": "False"},
+        env={
+            "DASK_DATAFRAME__QUERY_PLANNING": "True",
+            "DASK_DATAFRAME__PARQUET__MINIMUM_PARTITION_SIZE": "1GiB",
+        },
         worker_command=dask_worker_command,
         n_workers=n_workers,
         image=image,
@@ -62,7 +66,6 @@ def create_cluster(
                 ctr["resources"]["limits"]["nvidia.com/gpu"] = str(n_gpus_per_worker)
             if n_cpus_per_worker:
                 ctr["resources"]["limits"]["cpu"] = str(n_cpus_per_worker)
-
     cluster = KubeCluster(
         custom_cluster_spec=custom_cluster_spec, shutdown_on_close=False
     )

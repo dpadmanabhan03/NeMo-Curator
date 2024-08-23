@@ -15,10 +15,6 @@
 import os
 import time
 
-import dask
-import dask.dataframe as dd
-import s3_reader
-
 from nemo_curator import MinHash
 from nemo_curator.datasets import DocumentDataset
 from nemo_curator.log import create_logger
@@ -30,6 +26,9 @@ from nemo_curator.utils.distributed_utils import (
 from nemo_curator.utils.file_utils import get_all_files_paths_under
 from nemo_curator.utils.fuzzy_dedup_utils.io_utils import strip_trailing_sep
 from nemo_curator.utils.script_utils import ArgumentHelper
+import dask.dataframe as dd
+import dask
+import s3_reader
 
 dask.config.set({"dataframe.backend": "cudf"})
 
@@ -68,7 +67,11 @@ def main(args):
     )
     if args.s3_input_minhash_dirs:
         s3_reader.compute_minhashes_s3_uri(
-            minhasher, args.s3_input_minhash_dirs, args.s3_output_minhash_dir
+            minhasher,
+            args.s3_input_minhash_dirs,
+            args.s3_output_minhash_dir,
+            args.filesystem,
+            args.read_only_op,
         )
         return
 
@@ -164,6 +167,7 @@ def attach_args(parser=None):
     parser.add_argument(
         "--s3-input-minhash-dirs",
         type=str,
+        action="append",
         required=False,
         help="S3 Input directory which has parquet files to be read for compute_minhashes. ",
     )
@@ -181,6 +185,21 @@ def attach_args(parser=None):
         required=False,
         help="execute read_parquet method for local files",
     )
+
+    parser.add_argument(
+        "--filesystem",
+        type=str,
+        required=False,
+        help="execute read_parquet method with executable feature",
+    )
+
+    parser.add_argument(
+        "--read-only-op",
+        type=bool,
+        required=False,
+        help="execute read_parquet method with executable feature",
+    )
+
     return parser
 
 

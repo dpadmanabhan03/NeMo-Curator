@@ -1,0 +1,22 @@
+eksctl create iamidentitymapping \
+  --cluster demo-nemo-eks-cluster-deepika \
+  --arn arn:aws:iam::354625738399:role/eks-admin-role \
+  --username admin \
+  --group system:masters
+
+
+  aws eks create-access-entry --cluster-name demo-nemo-eks-cluster-deepika --principal-arn arn:aws:iam::354625738399:user/eks-user --region us-west-2
+
+
+aws eks associate-access-policy --cluster-name demo-nemo-eks-cluster-deepika \
+  --principal-arn arn:aws:iam::354625738399:user/eks-cluster-stack-EKSAdminA82683DE-aYC41Rep7GT5 \
+  --policy-arn arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy \
+  --access-scope type=cluster \
+  --region us-west-2
+
+eksctl create addon --name aws-mountpoint-s3-csi-driver --cluster demo-nemo-eks-cluster-deepika --service-account-role-arn arn:aws:iam::354625738399:role/AmazonEKS_S3_CSI_DriverRole --force
+
+$ helm upgrade --install aws-mountpoint-s3-csi-driver \
+   --namespace kube-system \
+   --set node.serviceAccount.annotations."eks\.amazonaws\.com/role-arn"="arn:aws:iam::354625738399:role/AmazonEKS_S3_CSI_DriverRole" \
+   aws-mountpoint-s3-csi-driver/aws-mountpoint-s3-csi-driver

@@ -11,7 +11,7 @@
     "allocationStrategy": "BEST_FIT_PROGRESSIVE",
     "minvCpus": 0,
     "maxvCpus": 128,
-    "instanceTypes": [],
+    "instanceTypes": ["m5"],
     "subnets": [],
     "securityGroupIds": [],
     "instanceRole": ""
